@@ -13,8 +13,6 @@ namespace IT481_Unit_2
 {
     public partial class CustomerViewForm : Form
     {
-        string dbConnectString = @"Provider=SQLOLEDB;Data Source = KRAKEN\WAVES;Initial Catalog = Northwind; Trusted_Connection=yes;";
-
         public CustomerViewForm()
         {
             InitializeComponent();
@@ -22,71 +20,67 @@ namespace IT481_Unit_2
 
         private void CustomerViewForm_Load(object sender, EventArgs e)
         {
-            try
-            {
-                LoadDatabase();
+            LoginForm frm = new LoginForm();
+            frm.IsLoggedIn = false;
+            frm.ShowDialog();
 
-                connectionStatusValue.Text = "Connected";
-
-                CloseDatabase();
-            }
-            catch (Exception ex)
+            if (!frm.IsLoggedIn)
             {
-                MessageBox.Show("Error," + ex);
+                this.Close();
+                Application.Exit();
+                return;
             }
+
+            loadTableButton.Enabled = false;
+            TableCountUpdateButton.Enabled = false;
+
         }
 
         private void loadDatabaseButton_Click(object sender, EventArgs e)
         {
-            OleDbCommand command = new OleDbCommand();
-
-            command.Connection = LoadDatabase();
-            command.CommandText = "SELECT * FROM Customers";
-
-            OleDbDataAdapter dataAdapter = new OleDbDataAdapter(command);
-            DataTable dt = new DataTable();
-            dataAdapter.Fill(dt);
-
-            CustomerGridView.DataSource = dt;
-
-            CloseDatabase();
+            try
+            {
+                string TableToLoad = TableSelectionBox.SelectedItem.ToString();
+                CustomerGridView.DataSource = dbManager.LoadTable(TableToLoad);
+                dbManager.CloseDatabase();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("You don't have access to this table, try another.");
+            }
         }
 
         private void UpdateCustomerCount()
         {
-            OleDbCommand command = new OleDbCommand();
+            try
+            {
+                string TableToLoad = TableSelectionBox.SelectedItem.ToString();
+                TableCountValue.Text = dbManager.TableCount(TableToLoad).Rows.Count.ToString();
+                dbManager.CloseDatabase();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("You don't have access to this table, try another.");
+            }
 
-            command.Connection = LoadDatabase();
-            command.CommandText = "SELECT * FROM Customers";
-
-            OleDbDataAdapter dataAdapter = new OleDbDataAdapter(command);
-            DataTable dt = new DataTable();
-            dataAdapter.Fill(dt);
-
-            CustomerCountValue.Text = dt.Rows.Count.ToString();
-
-            CloseDatabase();
-        }
-
-        private OleDbConnection LoadDatabase()
-        {
-            OleDbConnection dbConnection = new OleDbConnection();
-            dbConnection.ConnectionString = dbConnectString;
-            dbConnection.Open();
-
-            return dbConnection;
-        }
-
-        private void CloseDatabase()
-        {
-            OleDbConnection dbConnection = new OleDbConnection();
-            dbConnection.ConnectionString = dbConnectString;
-            dbConnection.Close();
         }
 
         private void CustomerCountUpdateButton_Click(object sender, EventArgs e)
         {
             UpdateCustomerCount();
+        }
+
+        private void TableSelectionBox_TextChanged(object sender, EventArgs e)
+        {
+            if(string.IsNullOrEmpty(TableSelectionBox.Text))
+            {
+                loadTableButton.Enabled = false;
+                TableCountUpdateButton.Enabled = false;
+            } else
+            {
+                loadTableButton.Enabled = true;
+                TableCountUpdateButton.Enabled = true;
+            }
         }
     }
 }
