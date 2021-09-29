@@ -11,6 +11,7 @@ namespace IT481_Unit_2
     static class dbManager
     {
         private static string dbConnectString = "";
+        private static DateTime lastLogin;
 
         public static OleDbConnection InitDatabase(string ServerName, string TableName, string UserName, string Passcode)
         {
@@ -18,6 +19,8 @@ namespace IT481_Unit_2
             dbConnectString = String.Format(@"Provider=SQLOLEDB;Data Source = {0};Initial Catalog = {1}; User Id={2};Password={3};", ServerName, TableName, UserName, Passcode);
             dbConnection.ConnectionString = dbConnectString;
             dbConnection.Open();
+
+            lastLogin = DateTime.Now;
 
             return dbConnection;
         }
